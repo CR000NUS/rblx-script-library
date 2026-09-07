@@ -1916,21 +1916,29 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 							open = not open
 						end)
 
+						for methodName, method in pairs(tab_data) do
+							local wrappedMethod = method
 
-						for i,v in pairs(tab_data) do
-							folder_data[i] = function(...)
-								local data, object
-								local ret = {v(...)}
-								if typeof(ret[1]) == "table" then
-									data = ret[1]
+							folder_data[methodName] = function(_, ...)
+								local ret = {wrappedMethod(tab_data, ...)}
+								local first = ret[1]
+								local object
+
+								if typeof(first) == "table" then
 									object = ret[2]
-									object.Parent = objects
-									return data, object
 								else
-									object = ret[1]
-									object.Parent = objects
-									return object
+									object = first
 								end
+
+								if object then
+									object.Parent = objects
+								end
+
+								if typeof(first) == "table" then
+									return first, object
+								end
+
+								return object
 							end
 						end
 
