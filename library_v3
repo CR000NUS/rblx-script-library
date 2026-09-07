@@ -1656,17 +1656,36 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						local log_lines = {}
 
 						local function update_line_numbers(text)
-							local line_count = 1
-							for _ in text:gmatch("\n") do
-								line_count = line_count + 1
-							end
-
-							local numbers = table.create(line_count)
-							for i = 1, line_count do
-								numbers[i] = tostring(i)
-							end
-							Lines.Text = table.concat(numbers, "\n") .. "\n"
-							sf.CanvasSize = UDim2.new(0, 0, line_count * 0.153846154, 0)
+						    local line_count = 1
+						
+						    for _ in text:gmatch("\n") do
+						        line_count = line_count + 1
+						    end
+						
+						    local numbers = table.create(line_count)
+						
+						    for i = 1, line_count do
+						        numbers[i] = tostring(i)
+						    end
+						
+						    Lines.Text = table.concat(numbers, "\n") .. "\n"
+						
+						    -- Console uses TextSize 15.
+						    -- Give each line roughly 18 pixels.
+						    local contentHeight = math.max(
+						        console.AbsoluteSize.Y,
+						        line_count * 18 + 10
+						    )
+						
+						    Source.Size = UDim2.new(1, -40, 0, contentHeight)
+						    Lines.Size = UDim2.new(0, 40, 0, contentHeight)
+						
+						    sf.CanvasSize = UDim2.new(
+						        0,
+						        0,
+						        0,
+						        contentHeight
+						    )
 						end
 
 						local function set_log_text()
