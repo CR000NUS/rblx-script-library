@@ -1869,129 +1869,87 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						return ha_data, ha
 					end
 
-					function tab_data:AddFolder(folder_name)
-					    local folder_data = {}
-					
-					    folder_name = tostring(folder_name or "New Folder")
-					
-					    local folder = prefabs:FindFirstChild("Folder"):Clone()
-					    local button = folder:FindFirstChild("Button")
-					    local objects = folder:FindFirstChild("Objects")
-					    local toggle = button:FindFirstChild("Toggle")
-					
-					    folder.ZIndex = folder.ZIndex + (windows * 10)
-					    button.ZIndex = button.ZIndex + (windows * 10)
-					    objects.ZIndex = objects.ZIndex + (windows * 10)
-					    toggle.ZIndex = toggle.ZIndex + (windows * 10)
-					
-					    local buttonChild = button:GetChildren()[1]
-					    if buttonChild and buttonChild:IsA("GuiObject") then
-					        buttonChild.ZIndex = buttonChild.ZIndex + (windows * 10)
-					    end
-					
-					    folder.Parent = new_tab
-					    button.Text = "      " .. folder_name
-					
-					    if buttonChild and buttonChild:IsA("ImageLabel") then
-					        buttonChild.ImageColor3 = options.main_color
-					    end
-					
-					    local function gFolderLen()
-					        local height = 25
-					
-					        for _, object in ipairs(objects:GetChildren()) do
-					            if not object:IsA("UIListLayout") and object:IsA("GuiObject") then
-					                height = height + object.AbsoluteSize.Y + 5
-					            end
-					        end
-					
-					        return height
-					    end
-					
-					    local open = false
-					
-					    button.MouseButton1Click:Connect(function()
-					        open = not open
-					
-					        if open then
-					            Resize(toggle, {
-					                Rotation = 90
-					            }, options.tween_time)
-					
-					            objects.Visible = true
-					
-					            Resize(folder, {
-					                Size = UDim2.new(1, 0, 0, gFolderLen())
-					            }, options.tween_time)
-					        else
-					            Resize(toggle, {
-					                Rotation = 0
-					            }, options.tween_time)
-					
-					            objects.Visible = false
-					
-					            Resize(folder, {
-					                Size = UDim2.new(1, 0, 0, 20)
-					            }, options.tween_time)
-					        end
-					    end)
-					
-					    function folder_data:AddButton(text, callback)
-					        local data, object = tab_data:AddButton(text, callback)
-					
-					        -- Some controls return only the GUI object,
-					        -- while others return data + GUI object.
-					        if object then
-					            object.Parent = objects
-					        elseif typeof(data) == "Instance" then
-					            data.Parent = objects
-					        end
-					
-					        return data, object
-					    end
-					
-					    function folder_data:AddSwitch(text, callback)
-					        local data, object = tab_data:AddSwitch(text, callback)
-					
-					        if object then
-					            object.Parent = objects
-					        end
-					
-					        return data, object
-					    end
-					
-					    function folder_data:AddSlider(text, callback, sliderOptions)
-					        local data, object = tab_data:AddSlider(text, callback, sliderOptions)
-					
-					        if object then
-					            object.Parent = objects
-					        end
-					
-					        return data, object
-					    end
-					
-					    function folder_data:AddLabel(text)
-					        local object = tab_data:AddLabel(text)
-					
-					        if object then
-					            object.Parent = objects
-					        end
-					
-					        return object
-					    end
-					
-					    function folder_data:AddTextBox(text, callback, textboxOptions)
-					        local object = tab_data:AddTextBox(text, callback, textboxOptions)
-					
-					        if object then
-					            object.Parent = objects
-					        end
-					        return object
-					    end
-					    return folder_data, folder
+					function tab_data:AddFolder(folder_name) -- [Folder]
+						local folder_data = {}
+
+						folder_name = tostring(folder_name or "New Folder")
+
+						local folder = prefabs:FindFirstChild("Folder"):Clone()
+						local button = folder:FindFirstChild("Button")
+						local objects = folder:FindFirstChild("Objects")
+						local toggle = button:FindFirstChild("Toggle")
+						-- Do not perform ZIndex arithmetic here.
+						-- Some executor/runtime combinations can expose these values as strings,
+						-- causing "attempt to perform arithmetic (add) on string".
+						-- The prefab already has valid ZIndex values, so this offset is unnecessary.
+
+						folder.Parent = new_tab
+						button.Text = "      " .. folder_name
+
+                        if button:GetChildren()[1] then
+                            button:GetChildren()[1].ImageColor3 = options.main_color
+                        end
+
+						local function gFolderLen()
+							local n = 25
+							for i,v in pairs(objects:GetChildren()) do
+								if not (v:IsA("UIListLayout")) then
+									n = n + v.AbsoluteSize.Y + 5
+								end
+							end
+							return n
+						end
+
+						local open = false
+						button.MouseButton1Click:Connect(function()
+							if open then -- Close
+								Resize(toggle, {Rotation = 0}, options.tween_time)
+								objects.Visible = false
+								Resize(folder, {Size = UDim2.new(1, 0, 0, 20)}, options.tween_time)
+							else -- Open
+								Resize(toggle, {Rotation = 90}, options.tween_time)
+								objects.Visible = true
+								Resize(folder, {Size = UDim2.new(1, 0, 0, gFolderLen())}, options.tween_time)
+							end
+
+							open = not open
+						end)
+
+
+						-- Snapshot each tab method into its own local before wrapping it.
+						-- The old implementation closed over the generic-for variable `v`,
+						-- so folder_data:AddButton() could randomly call another tab method.
+						for methodName, method in pairs(tab_data) do
+							local wrappedMethod = method
+
+							folder_data[methodName] = function(_, ...)
+								local ret = {wrappedMethod(tab_data, ...)}
+								local first = ret[1]
+								local object
+
+								if typeof(first) == "table" then
+									object = ret[2]
+								else
+									object = first
+								end
+
+								if object then
+									object.Parent = objects
+								end
+
+								if typeof(first) == "table" then
+									return first, object
+								end
+
+								return object
+							end
+						end
+
+						return folder_data, folder
 					end
 
 				end
+
 				return tab_data, new_tab
 			end
 		end
