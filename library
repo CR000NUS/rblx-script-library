@@ -966,9 +966,9 @@ function library:AddWindow(title, options)
 
 		spawn(function()
 			while true do
-        if not (Window and Window.Parent) then
-            break -- window destroyed, stop the loop
-        end
+        		if not (Window and Window.Parent) then
+            		break -- window destroyed, stop the loop
+        		end
 				Bar.BackgroundColor3 = options.main_color
 				Base.BackgroundColor3 = options.main_color
 				Base.ImageColor3 = options.main_color
@@ -1169,9 +1169,9 @@ function library:AddWindow(title, options)
 
 						spawn(function()
 							while true do
-                if not (button and button.Parent) then
-                  break
-                end
+                				if not (button and button.Parent) then
+                  					break
+                				end
 								if button and button:GetChildren()[1] then
 									button:GetChildren()[1].ImageColor3 = options.main_color
 								end
@@ -1204,9 +1204,9 @@ function library:AddWindow(title, options)
 
 						spawn(function()
 							while true do
-                if not (switch and switch.Parent) then
-                  break
-                end
+                				if not (switch and switch.Parent) then
+                  					break
+                				end
 								if switch and switch:GetChildren()[1] then
 									switch:GetChildren()[1].ImageColor3 = options.main_color
 								end
@@ -1982,9 +1982,9 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 
 						spawn(function()
 							while true do
-                if not (button and button.Parent) then
-                  break
-                end
+                				if not (button and button.Parent) then
+                  					break
+                				end
 								if button and button:GetChildren()[1] then
 									button:GetChildren()[1].ImageColor3 = options.main_color
 								end
@@ -2017,9 +2017,9 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 
 						spawn(function()
 							while true do
-                if not (folder and folder.Parent) then
-                  break -- folder destroyed, stop the loop
-                end
+                				if not (folder and folder.Parent) then
+                  					break
+                				end
 								Resize(folder, {Size = UDim2.new(1, 0, 0, (open and gFolderLen() or 20))}, options.tween_time)
 								wait()
 							end
