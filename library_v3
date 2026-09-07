@@ -25,7 +25,7 @@ local tabSelection = Instance.new("ImageLabel")
 local tabButtons = Instance.new("Frame")
 local uiListLayout = Instance.new("UIListLayout")
 local frame = Instance.new("Frame")
-local tab = Instance.new("Frame")
+local tab = Instance.new("ScrollingFrame")
 local uiListLayout2 = Instance.new("UIListLayout")
 local textBox = Instance.new("TextBox")
 local textBoxRoundify4px = Instance.new("ImageLabel")
@@ -220,8 +220,14 @@ tab.Name = "Tab"
 tab.Parent = prefabs
 tab.BackgroundColor3 = Color3.new(1, 1, 1)
 tab.BackgroundTransparency = 1
+tab.BorderSizePixel = 0
 tab.Size = UDim2.new(1, 0, 1, 0)
 tab.Visible = false
+
+tab.CanvasSize = UDim2.new(0, 0, 0, 0)
+tab.AutomaticCanvasSize = Enum.AutomaticSize.Y
+tab.ScrollingDirection = Enum.ScrollingDirection.Y
+tab.ScrollBarThickness = 5
 
 uiListLayout2.Parent = tab
 uiListLayout2.SortOrder = Enum.SortOrder.LayoutOrder
