@@ -1640,6 +1640,10 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						local Source = sf:FindFirstChild("Source")
 						local Lines = sf:FindFirstChild("Lines")
 
+						sf.ScrollingDirection = Enum.ScrollingDirection.Y
+						sf.ScrollBarThickness = 5
+						sf.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+
 						Source.ZIndex = Source.ZIndex + (windows * 10)
 						Lines.ZIndex = Lines.ZIndex + (windows * 10)
 						Source.TextEditable = not console_options.readonly
@@ -1652,7 +1656,7 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 							Source.Comments.ZIndex = Source.Comments.ZIndex + 1
 						end
 
-						local MAX_LOG_LINES = 1000
+						local MAX_LOG_LINES = 2000
 						local log_lines = {}
 
 						local function update_line_numbers(text)
@@ -1697,10 +1701,6 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 							Source.Text = table.concat(log_lines, "\n") .. "\n"
 						end
 
-						-- Lua source console keeps the original syntax-highlighting behavior,
-						-- but log consoles intentionally stay plain text. Log consoles must
-						-- never listen to Source.Changed because every print would otherwise
-						-- re-process the entire history.
 						if console_options.source == "Lua" then
 							local lua_keywords = {"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
 							local global_env = {"getrawmetatable", "newcclosure", "islclosure", "setclipboard", "game", "workspace", "script", "math", "string", "table", "print", "wait", "BrickColor", "Color3", "next", "pairs", "ipairs", "select", "unpack", "Instance", "Vector2", "Vector3", "CFrame", "Ray", "UDim2", "Enum", "assert", "error", "warn", "tick", "loadstring", "_G", "shared", "getfenv", "setfenv", "newproxy", "setmetatable", "getmetatable", "os", "debug", "pcall", "ypcall", "xpcall", "rawequal", "rawset", "rawget", "tonumber", "tostring", "type", "typeof", "_VERSION", "coroutine", "delay", "require", "spawn", "LoadLibrary", "settings", "stats", "time", "UserSettings", "version", "Axes", "ColorSequence", "Faces", "ColorSequenceKeypoint", "NumberRange", "NumberSequence", "NumberSequenceKeypoint", "gcinfo", "elapsedTime", "collectgarbage", "PhysicalProperties", "Rect", "Region3", "Region3int16", "UDim", "Vector2int16", "Vector3int16", "load", "fire", "Fire"}
