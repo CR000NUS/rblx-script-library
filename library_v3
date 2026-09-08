@@ -1650,6 +1650,11 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						Lines.ZIndex = Lines.ZIndex + (windows * 10)
 						Source.TextEditable = not console_options.readonly
 
+						if console_options.readonly then
+						    Source.Active = false
+						    Source.TextEditable = false
+						end
+
 						for _, child in pairs(Source:GetChildren()) do
 							child.ZIndex = child.ZIndex + (windows * 10) + 1
 						end
@@ -1711,6 +1716,13 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 							end
 
 							Source.Text = table.concat(log_lines, "\n") .. "\n"
+
+							task.defer(function()
+							    sf.CanvasPosition = Vector2.new(
+							        0,
+							        math.max(0, sf.AbsoluteCanvasSize.Y - sf.AbsoluteSize.Y)
+							    )
+							end)
 						end
 
 						if console_options.source == "Lua" then
