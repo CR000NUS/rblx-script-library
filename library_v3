@@ -1710,19 +1710,29 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						end
 
 						local function set_log_text()
-							if #log_lines == 0 then
-								Source.Text = ""
-								return
-							end
-
-							Source.Text = table.concat(log_lines, "\n") .. "\n"
-
-							task.defer(function()
-							    sf.CanvasPosition = Vector2.new(
-							        0,
-							        math.max(0, sf.AbsoluteCanvasSize.Y - sf.AbsoluteSize.Y)
-							    )
-							end)
+						    if #log_lines == 0 then
+						        Source.Text = ""
+						        update_line_numbers("")
+						        return
+						    end
+						
+						    local text = table.concat(log_lines, "\n") .. "\n"
+						
+						    Source.Text = text
+						
+						    -- Update the internal console size/canvas.
+						    update_line_numbers(text)
+						
+						    -- Keep newest output visible.
+						    task.defer(function()
+						        sf.CanvasPosition = Vector2.new(
+						            0,
+						            math.max(
+						                0,
+						                sf.AbsoluteCanvasSize.Y - sf.AbsoluteSize.Y
+						            )
+						        )
+						    end)
 						end
 
 						if console_options.source == "Lua" then
