@@ -1636,7 +1636,7 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						console.ZIndex = console.ZIndex + (windows * 10)
 						console.Size = UDim2.new(1, 0, console_options.full and 1 or 0, console_options.y)
 
-						local sf = console:GetChildren()[1]
+						local sf = console:FindFirstChildWhichIsA("ScrollingFrame")
 						local Source = sf:FindFirstChild("Source")
 						local Lines = sf:FindFirstChild("Lines")
 
@@ -1645,6 +1645,14 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						sf.ScrollBarThickness = 6
 						sf.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
 						sf.Active = true
+
+						sf.MouseEnter:Connect(function()
+						    new_tab.ScrollingEnabled = false
+						end)
+						
+						sf.MouseLeave:Connect(function()
+						    new_tab.ScrollingEnabled = true
+						end)
 
 						Source.ZIndex = Source.ZIndex + (windows * 10)
 						Lines.ZIndex = Lines.ZIndex + (windows * 10)
@@ -1719,20 +1727,7 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						    local text = table.concat(log_lines, "\n") .. "\n"
 						
 						    Source.Text = text
-						
-						    -- Update the internal console size/canvas.
 						    update_line_numbers(text)
-						
-						    -- Keep newest output visible.
-						    task.defer(function()
-						        sf.CanvasPosition = Vector2.new(
-						            0,
-						            math.max(
-						                0,
-						                sf.AbsoluteCanvasSize.Y - sf.AbsoluteSize.Y
-						            )
-						        )
-						    end)
 						end
 
 						if console_options.source == "Lua" then
