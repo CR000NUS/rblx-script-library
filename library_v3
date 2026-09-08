@@ -1640,9 +1640,11 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						local Source = sf:FindFirstChild("Source")
 						local Lines = sf:FindFirstChild("Lines")
 
+						sf.ScrollingEnabled = true
 						sf.ScrollingDirection = Enum.ScrollingDirection.Y
-						sf.ScrollBarThickness = 5
+						sf.ScrollBarThickness = 6
 						sf.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+						sf.Active = true
 
 						Source.ZIndex = Source.ZIndex + (windows * 10)
 						Lines.ZIndex = Lines.ZIndex + (windows * 10)
@@ -1674,15 +1676,25 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						
 						    Lines.Text = table.concat(numbers, "\n") .. "\n"
 						
-						    -- Console uses TextSize 15.
-						    -- Give each line roughly 18 pixels.
+						    -- Each console line is roughly 18 pixels tall
 						    local contentHeight = math.max(
-						        console.AbsoluteSize.Y,
+						        sf.AbsoluteSize.Y,
 						        line_count * 18 + 10
 						    )
 						
-						    Source.Size = UDim2.new(1, -40, 0, contentHeight)
-						    Lines.Size = UDim2.new(0, 40, 0, contentHeight)
+						    Source.Size = UDim2.new(
+						        1,
+						        -40,
+						        0,
+						        contentHeight
+						    )
+						
+						    Lines.Size = UDim2.new(
+						        0,
+						        40,
+						        0,
+						        contentHeight
+						    )
 						
 						    sf.CanvasSize = UDim2.new(
 						        0,
