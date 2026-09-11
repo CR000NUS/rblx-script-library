@@ -1674,6 +1674,8 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						local MAX_LOG_LINES = 2000
 						local log_lines = {}
 
+						local consoleUpdateScheduled = false
+
 						local function update_line_numbers(text)
 						    local line_count = 1
 						
@@ -1699,60 +1701,66 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						        text = table.concat(log_lines, "\n") .. "\n"
 						    end
 						
-						    -- Check whether the user was already near the bottom.
-						    local oldMaxScroll = math.max(
-						        0,
-						        sf.AbsoluteCanvasSize.Y - sf.AbsoluteSize.Y
-						    )
-						
-						    local wasAtBottom =
-						        sf.CanvasPosition.Y >= oldMaxScroll - 20
-						
 						    Source.Text = text
-							update_line_numbers(text)
+						    update_line_numbers(text)
 						
-						    -- Wait until Roblox recalculates TextBounds after changing the text.
-						    task.defer(function()
+						    -- Don't schedule hundreds of resize/scroll operations
+						    -- when one command prints lots of lines.
+						    if consoleUpdateScheduled then
+						        return
+						    end
+						
+						    consoleUpdateScheduled = true
+						
+						    task.spawn(function()
+						        -- Let Roblox finish updating the TextBox.
+						        RS.Heartbeat:Wait()
+						        RS.Heartbeat:Wait()
+						
 						        if not Source or not Source.Parent then
+						            consoleUpdateScheduled = false
 						            return
 						        end
 						
-						        local actualHeight = math.max(
+						        local contentHeight = math.max(
 						            sf.AbsoluteSize.Y,
-						            Source.TextBounds.Y + 15
+						            Source.TextBounds.Y + 20
 						        )
 						
 						        Source.Size = UDim2.new(
 						            1,
 						            -40,
 						            0,
-						            actualHeight
+						            contentHeight
 						        )
 						
 						        Lines.Size = UDim2.new(
 						            0,
 						            40,
 						            0,
-						            actualHeight
+						            contentHeight
 						        )
 						
 						        sf.CanvasSize = UDim2.new(
 						            0,
 						            0,
 						            0,
-						            actualHeight
+						            contentHeight
 						        )
 						
-						        -- Only follow new output if the user was already at the bottom.
-						        if wasAtBottom then
-						            sf.CanvasPosition = Vector2.new(
+						        -- Give CanvasSize one frame to update.
+						        RS.Heartbeat:Wait()
+						
+						        -- Always show the newest output.
+						        sf.CanvasPosition = Vector2.new(
+						            0,
+						            math.max(
 						                0,
-						                math.max(
-						                    0,
-						                    actualHeight - sf.AbsoluteSize.Y
-						                )
+						                contentHeight - sf.AbsoluteSize.Y
 						            )
-						        end
+						        )
+						
+						        consoleUpdateScheduled = false
 						    end)
 						end
 
