@@ -1,4 +1,4 @@
-local LIBRARY_BUILD = "cronus-library-002"
+local LIBRARY_BUILD = "version-004"
 
 -- Reload the library once when switching to this known-good build.
 -- Subsequent executions reuse it, so library-level input connections do not stack.
@@ -131,7 +131,7 @@ end
 
 local function CreateDebugTab()
     DebugConsole = DebugTab:AddConsole({
-        y = 300,
+        y = 400,
         source = "Logs",
         readonly = true,
         full = false,
@@ -372,6 +372,10 @@ local function CreateDebugTab()
     end, {
         clear = true
     })
+
+    DebugTab:AddButton("Clear Console", function()
+        DebugConsole:Set("")
+    end)
 
     local historyConnection
 
@@ -653,7 +657,7 @@ local function CreateMenu()
 
     window, WindowInstance = library:AddWindow("Cronus' - Universal - Menu", {
         main_color = Color3.fromRGB(0, 0, 0),
-        min_size = Vector2.new(500, 400),
+        min_size = Vector2.new(500, 600),
         can_resize = true,
     })
 
