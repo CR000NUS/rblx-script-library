@@ -84,6 +84,7 @@ local inputRoundify4px = Instance.new("ImageLabel")
 local windowsFrame = Instance.new("Frame")
 local cloneref = cloneref and cloneref or function(...) return ... end
 local CoreGui= cloneref(game:GetService("CoreGui"))
+local TextService = game:GetService("TextService")
 
 
 imgui.Name = "imgui"
@@ -1773,11 +1774,23 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						
 						            local shouldAutoScroll = is_near_bottom()
 						
-						            local contentHeight = math.max(
-						                sf.AbsoluteSize.Y,
-						                Source.TextBounds.Y + 20
-						            )
-						
+									local availableWidth = math.max(
+									    1,
+									    sf.AbsoluteSize.X - 40
+									)
+									
+									local measuredSize = TextService:GetTextSize(
+									    Source.Text,
+									    Source.TextSize,
+									    Source.Font,
+									    Vector2.new(availableWidth, math.huge)
+									)
+									
+									local contentHeight = math.max(
+									    sf.AbsoluteSize.Y,
+									    measuredSize.Y + 20
+									)
+
 						            Source.Size = UDim2.new(
 						                1,
 						                -40,
