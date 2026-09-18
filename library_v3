@@ -828,7 +828,15 @@ local checks = {
 	["binding"] = false,
 }
 
-UIS.InputBegan:Connect(function(input, gameProcessed)
+local libraryConnections = {}
+
+local function connectLibrary(signal, callback)
+    local connection = signal:Connect(callback)
+    table.insert(libraryConnections, connection)
+    return connection
+end
+
+connectLibrary(UIS.InputBegan, function(input, gameProcessed)
 	if input.KeyCode == ((typeof(ui_options.toggle_key) == "EnumItem") and ui_options.toggle_key or Enum.KeyCode.RightShift) then
 		if root then
 			if not checks.binding and root.Enabled ~= nil then
@@ -950,17 +958,34 @@ function library:FormatWindows()
 end
 
 function library:AddWindow(title, options)
-	windows = windows + 1
-	local dropdown_open = false
-	title = tostring(title or "New Window")
-	options = (typeof(options) == "table") and options or ui_options
-	options.tween_time = 0.1
+    windows = windows + 1
 
-	local Window = prefabs:FindFirstChild("Window"):Clone()
-	Window.Parent = windowsFrame
-	Window:FindFirstChild("Title").Text = title
-	Window.Size = UDim2.new(0, options.min_size.X, 0, options.min_size.Y)
-	Window.ZIndex = Window.ZIndex + (windows * 10)
+    local dropdown_open = false
+
+    title = tostring(title or "New Window")
+    options = (typeof(options) == "table") and options or ui_options
+    options.tween_time = 0.1
+
+    local Window = prefabs:FindFirstChild("Window"):Clone()
+
+    local connections = {}
+
+    local function connect(signal, callback)
+        local connection = signal:Connect(callback)
+        table.insert(connections, connection)
+        return connection
+    end
+
+    Window.Parent = windowsFrame
+    Window:FindFirstChild("Title").Text = title
+    Window.Size = UDim2.new(
+        0,
+        options.min_size.X,
+        0,
+        options.min_size.Y
+    )
+
+    Window.ZIndex = Window.ZIndex + (windows * 10)
 
 	do -- Altering Window Color
 		local Title = Window:FindFirstChild("Title")
@@ -990,6 +1015,21 @@ function library:AddWindow(title, options)
 	local Resizer = Window:WaitForChild("Resizer")
 
 	local window_data = {}
+
+	function window_data:Destroy()
+	    for _, connection in ipairs(connections) do
+	        if connection.Connected then
+	            connection:Disconnect()
+	        end
+	    end
+	
+	    table.clear(connections)
+	
+	    if Window and Window.Parent then
+	        Window:Destroy()
+	    end
+	end
+
 	Window.Draggable = true
 
 	do -- Resize Window
@@ -1013,7 +1053,7 @@ function library:AddWindow(title, options)
 		end)
 
 		local Held = false
-		UIS.InputBegan:Connect(function(inputObject)
+		connect(UIS.InputBegan, function(inputObject)
 			if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
 				Held = true
 
@@ -1042,7 +1082,7 @@ function library:AddWindow(title, options)
 				end)
 			end
 		end)
-		UIS.InputEnded:Connect(function(inputObject)
+		connect(UIS.InputEnded, function(inputObject)
 			if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
 				Held = false
 			end
@@ -1235,15 +1275,26 @@ function library:AddWindow(title, options)
 						textbox.ZIndex = textbox.ZIndex + (windows * 10)
 						textbox:GetChildren()[1].ZIndex = textbox:GetChildren()[1].ZIndex + (windows * 10)
 
-						textbox.FocusLost:Connect(function(ep)
-							if ep then
-								if #textbox.Text > 0 then
-									pcall(callback, textbox.Text)
-									if textbox_options.clear then
-										textbox.Text = ""
-									end
-								end
-							end
+						textbox.FocusLost:Connect(function(enterPressed)
+						    if not enterPressed then
+						        return
+						    end
+						
+						    if #textbox.Text == 0 then
+						        return
+						    end
+						
+						    local text = textbox.Text
+						
+						    if textbox_options.clear then
+						        textbox.Text = ""
+						    end
+						
+						    local success, err = pcall(callback, text)
+						
+						    if not success then
+						        warn("AddTextBox callback error:", err)
+						    end
 						end)
 
 						return textbox
@@ -1287,7 +1338,7 @@ function library:AddWindow(title, options)
 							end)
 
 							local Held = false
-							UIS.InputBegan:Connect(function(inputObject)
+							connect(UIS.InputBegan, function(inputObject)
 								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
 									Held = true
 
@@ -1327,7 +1378,7 @@ function library:AddWindow(title, options)
 									end)
 								end
 							end)
-							UIS.InputEnded:Connect(function(inputObject)
+							connect(UIS.InputEnded, function(inputObject)
 								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
 									Held = false
 								end
@@ -1395,7 +1446,7 @@ function library:AddWindow(title, options)
 							keybind = Keybind
 						end
 
-						UIS.InputBegan:Connect(function(a, b)
+						connect(UIS.InputBegan, function(a, b)
 							if checks.binding then
 								spawn(function()
 									wait()
@@ -1568,7 +1619,7 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 							saturation_indicator.ZIndex = saturation_indicator.ZIndex + (windows * 10)
 
 							local Held = false
-							UIS.InputBegan:Connect(function(inputObject)
+							connect(UIS.InputBegan, function(inputObject)
 								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
 									Held = true
 
@@ -1602,7 +1653,7 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 									end)
 								end
 							end)
-							UIS.InputEnded:Connect(function(inputObject)
+							connect(UIS.InputEnded, function(inputObject)
 								if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
 									Held = false
 								end
@@ -1674,8 +1725,6 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						local MAX_LOG_LINES = 2000
 						local log_lines = {}
 
-						local consoleUpdateScheduled = false
-
 						local function update_line_numbers(text)
 						    local line_count = 1
 						
@@ -1692,6 +1741,82 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						    Lines.Text = table.concat(numbers, "\n") .. "\n"
 						end
 
+						local consoleUpdateScheduled = false
+						local consoleUpdateDirty = false
+						
+						local function is_near_bottom()
+						    local bottom = math.max(
+						        0,
+						        sf.AbsoluteCanvasSize.Y - sf.AbsoluteSize.Y
+						    )
+						
+						    return sf.CanvasPosition.Y >= bottom - 30
+						end
+						
+						local function update_console_size()
+						    if consoleUpdateScheduled then
+						        consoleUpdateDirty = true
+						        return
+						    end
+						
+						    consoleUpdateScheduled = true
+						
+						    task.spawn(function()
+						        repeat
+						            consoleUpdateDirty = false
+						
+						            RS.Heartbeat:Wait()
+						
+						            if not Source or not Source.Parent then
+						                break
+						            end
+						
+						            local shouldAutoScroll = is_near_bottom()
+						
+						            local contentHeight = math.max(
+						                sf.AbsoluteSize.Y,
+						                Source.TextBounds.Y + 20
+						            )
+						
+						            Source.Size = UDim2.new(
+						                1,
+						                -40,
+						                0,
+						                contentHeight
+						            )
+						
+						            Lines.Size = UDim2.new(
+						                0,
+						                40,
+						                0,
+						                contentHeight
+						            )
+						
+						            sf.CanvasSize = UDim2.new(
+						                0,
+						                0,
+						                0,
+						                contentHeight
+						            )
+						
+						            RS.Heartbeat:Wait()
+						
+						            if shouldAutoScroll then
+						                sf.CanvasPosition = Vector2.new(
+						                    0,
+						                    math.max(
+						                        0,
+						                        contentHeight - sf.AbsoluteSize.Y
+						                    )
+						                )
+						            end
+						
+						        until not consoleUpdateDirty
+						
+						        consoleUpdateScheduled = false
+						    end)
+						end
+
 						local function set_log_text()
 						    local text
 						
@@ -1702,66 +1827,12 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 						    end
 						
 						    Source.Text = text
-						    update_line_numbers(text)
 						
-						    -- Don't schedule hundreds of resize/scroll operations
-						    -- when one command prints lots of lines.
-						    if consoleUpdateScheduled then
-						        return
+						    if Lines.Visible then
+						        update_line_numbers(text)
 						    end
 						
-						    consoleUpdateScheduled = true
-						
-						    task.spawn(function()
-						        -- Let Roblox finish updating the TextBox.
-						        RS.Heartbeat:Wait()
-						        RS.Heartbeat:Wait()
-						
-						        if not Source or not Source.Parent then
-						            consoleUpdateScheduled = false
-						            return
-						        end
-						
-						        local contentHeight = math.max(
-						            sf.AbsoluteSize.Y,
-						            Source.TextBounds.Y + 20
-						        )
-						
-						        Source.Size = UDim2.new(
-						            1,
-						            -40,
-						            0,
-						            contentHeight
-						        )
-						
-						        Lines.Size = UDim2.new(
-						            0,
-						            40,
-						            0,
-						            contentHeight
-						        )
-						
-						        sf.CanvasSize = UDim2.new(
-						            0,
-						            0,
-						            0,
-						            contentHeight
-						        )
-						
-						        -- Give CanvasSize one frame to update.
-						        RS.Heartbeat:Wait()
-						
-						        -- Always show the newest output.
-						        sf.CanvasPosition = Vector2.new(
-						            0,
-						            math.max(
-						                0,
-						                contentHeight - sf.AbsoluteSize.Y
-						            )
-						        )
-						
-						        consoleUpdateScheduled = false
-						    end)
+						    update_console_size()
 						end
 
 						if console_options.source == "Lua" then
@@ -1921,7 +1992,7 @@ local object = prefabs:FindFirstChild("DropdownButton"):Clone()
 								return
 							end
 
-							log_lines[#log_lines + 1] = "[*] " .. tostring(msg)
+							log_lines[#log_lines + 1] = tostring(msg)
 
 							if #log_lines > MAX_LOG_LINES then
 								table.remove(log_lines, 1)
